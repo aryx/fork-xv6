@@ -1,0 +1,7 @@
+printf.o: printf.c ../../include/types.h ../../include/stat.h \
+ ../../include/user.h
+ulib.o: ulib.c ../../include/types.h ../../include/stat.h \
+ ../../include/fcontrol.h ../../include/user.h
+umalloc.o: umalloc.c ../../include/types.h ../../include/stat.h \
+ ../../include/user.h ../../include/param.h
+usys.o: usys.S ../../include/syscall.h ../../include/traps.h

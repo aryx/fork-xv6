@@ -1,0 +1,4 @@
+# -*- makefile -*-
+
+clean::
+	rm -f *.o *.a

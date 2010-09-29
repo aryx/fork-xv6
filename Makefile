@@ -1,141 +1,211 @@
+#############################################################################
+# Configuration section
+#############################################################################
+
+# compilers, debugging, etc
+-include Makefile.config
+
+INCLUDEDIRS=include
+INCLUDES=$(INCLUDEDIRS:%=-I %)
+
+CFLAGS+=$(INCLUDES)
+ASFLAGS+=$(INCLUDES)
+
+#############################################################################
+# The kernel
+#############################################################################
+
 OBJS = \
-	bio.o\
-	console.o\
-	exec.o\
-	file.o\
-	fs.o\
-	ide.o\
-	ioapic.o\
-	kalloc.o\
-	kbd.o\
-	lapic.o\
-	main.o\
-	mp.o\
-	picirq.o\
-	pipe.o\
-	proc.o\
-	spinlock.o\
-	string.o\
-	swtch.o\
-	syscall.o\
-	sysfile.o\
-	sysproc.o\
-	timer.o\
-	trapasm.o\
-	trap.o\
-	vectors.o\
+	lib/string.o\
+	arch/kern/swtch.o\
+	arch/kern/trapasm.o\
+	arch/kern/vectors.o\
+	kern/hardware/ioapic.o\
+	kern/buffer.o\
+	kern/exec.o\
+	kern/mp.o\
+	kern/spinlock.o\
+	kern/syscall.o\
+	kern/sysfile.o\
+	kern/sysproc.o\
+	kern/hardware/timer.o\
+	kern/trap.o\
+	kern/hardware/lapic.o\
+	kern/hardware/picirq.o\
+	fs/file.o\
+	kern/pipe.o\
+	mm/kalloc.o\
+	drivers/console.o\
+	kern/proc.o\
+	fs/fs.o\
+	drivers/ide.o\
+	drivers/kbd.o\
+	init/main.o\
 
-# Cross-compiling (e.g., on Mac OS X)
-# TOOLPREFIX = i386-jos-elf-
+SUBDIRS=lib arch/kern kern kern/hardware drivers fs init mm
 
-# Using native tools (e.g., on X86 Linux)
-TOOLPREFIX = 
+#############################################################################
+# Toplevel
+#############################################################################
 
-CC = $(TOOLPREFIX)gcc
-AS = $(TOOLPREFIX)gas
-LD = $(TOOLPREFIX)ld
-OBJCOPY = $(TOOLPREFIX)objcopy
-OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-builtin -O2 -Wall -MD -ggdb -m32
-CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
-ASFLAGS = -m32
-# FreeBSD ld wants ``elf_i386_fbsd''
-LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null)
+all: bootblock kernel fs.img xv6.img
 
-xv6.img: bootblock kernel fs.img
+#############################################################################
+# Building the kernel
+#############################################################################
+
+#----------------------------------------------------------------------------
+# bootloader
+#----------------------------------------------------------------------------
+
+#pad: need -O to generate a smaller than 512 bytes program
+# sign.pl makes bootblock a valid bootsect, with the magic 55AA at the end
+bootblock: arch/boot/bootasm.S arch/boot/bootmain.c
+	$(CC) $(CFLAGS) -O -c arch/boot/bootasm.S
+	$(CC) $(CFLAGS) -O -c arch/boot/bootmain.c
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o bootblock.o bootasm.o bootmain.o
+	$(OBJCOPY) -S -O binary bootblock.o bootblock
+	scripts/sign.pl bootblock
+
+
+#----------------------------------------------------------------------------
+# special embedded low level progs
+#----------------------------------------------------------------------------
+
+# here are 2 programs linked with the kernel. They are not linked
+# as regular kernel obj because they require special -Ttext and so
+# are loaded manually from the kernel when needed
+# TODO if put -Ttext 4  then does not work ... even when also adjust proc.c
+#  accordingly
+
+# first process
+initcode: init/initcode.S
+	$(CC) $(CFLAGS) -c $^
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0      -o initcode.out initcode.o
+	$(OBJCOPY) -S -O binary initcode.out initcode
+
+# for SMP initialization
+bootother: init/bootother.S
+	$(CC) $(CFLAGS) -c $^
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7000 -o bootother.out bootother.o
+	$(OBJCOPY) -S -O binary bootother.out bootother
+
+#----------------------------------------------------------------------------
+# !!! The kernel!!!
+#----------------------------------------------------------------------------
+
+# set -Ttext to a portion after video RAM (0xb8000) at least
+# TODO if 0xffff0 then pb, why?? if 0xfffff then ok
+# was just -Ttext 0xfffff, no -T link.ld
+kernel: $(OBJS) initcode bootother
+	$(LD) $(LDFLAGS) -Ttext 0xfffff -e main -o kernel \
+          $(OBJS) \
+          -b binary    bootother initcode
+
+#----------------------------------------------------------------------------
+# Final image
+#----------------------------------------------------------------------------
+xv6.img: bootblock kernel
 	dd if=/dev/zero of=xv6.img count=10000
 	dd if=bootblock of=xv6.img conv=notrunc
 	dd if=kernel of=xv6.img seek=1 conv=notrunc
 
-bootblock: bootasm.S bootmain.c
-	$(CC) $(CFLAGS) -O -nostdinc -I. -c bootmain.c
-	$(CC) $(CFLAGS) -nostdinc -I. -c bootasm.S
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o bootblock.o bootasm.o bootmain.o
-	$(OBJDUMP) -S bootblock.o > bootblock.asm
-	$(OBJCOPY) -S -O binary bootblock.o bootblock
-	./sign.pl bootblock
 
-bootother: bootother.S
-	$(CC) $(CFLAGS) -nostdinc -I. -c bootother.S
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7000 -o bootother.out bootother.o
-	$(OBJCOPY) -S -O binary bootother.out bootother
-	$(OBJDUMP) -S bootother.o > bootother.asm
 
-initcode: initcode.S
-	$(CC) $(CFLAGS) -nostdinc -I. -c initcode.S
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o initcode.out initcode.o
-	$(OBJCOPY) -S -O binary initcode.out initcode
-	$(OBJDUMP) -S initcode.o > initcode.asm
 
-kernel: $(OBJS) bootother initcode
-	$(LD) $(LDFLAGS) -Ttext 0x100000 -e main -o kernel $(OBJS) -b binary initcode bootother
-	$(OBJDUMP) -S kernel > kernel.asm
-	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernel.sym
+clean::
+	rm -f xv6.img bootblock bootother initcode kernel 
 
-tags: $(OBJS) bootother.S _init
-	etags *.S *.c
 
-vectors.S: vectors.pl
-	perl vectors.pl > vectors.S
+arch/kern/vectors.S: scripts/vectors.pl
+	perl scripts/vectors.pl > arch/kern/vectors.S
+clean::
+	rm -f arch/kern/vectors.S
 
-ULIB = ulib.o usys.o printf.o umalloc.o
 
-_%: %.o $(ULIB)
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
-	$(OBJDUMP) -S $@ > $*.asm
-	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
 
-_forktest: forktest.o $(ULIB)
-	# forktest has less library code linked in - needs to be small
-	# in order to be able to max out the proc table.
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest forktest.o ulib.o usys.o
-	$(OBJDUMP) -S _forktest > forktest.asm
+clean::
+	for i in $(SUBDIRS); do (cd $$i; rm -f *.[od]); done 
 
-mkfs: mkfs.c fs.h
-	gcc $(CFLAGS) -Wall -o mkfs mkfs.c
 
-UPROGS=\
-	_cat\
-	_echo\
-	_forktest\
-	_grep\
-	_init\
-	_kill\
-	_ln\
-	_ls\
-	_mkdir\
-	_rm\
-	_sh\
-	_usertests\
-	_wc\
-	_zombie\
+#############################################################################
+# User programs and fs image
+#############################################################################
 
-fs.img: mkfs README $(UPROGS)
-	./mkfs fs.img README $(UPROGS)
+#pad: problematic, can not native compile it and run it :(
+mkfs: scripts/mkfs.c include/fs.h
+	$(NATIVEGCC) -fno-builtin -MD -Wall -Iinclude -o mkfs scripts/mkfs.c
 
+UPROGS= $(wildcard programs/*.c)
+
+list_uprogs:
+	echo $(UPROGS)
+
+fs.img: mkfs readme.txt $(UPROGS)
+	make -C programs
+	cp programs/_* .
+	./mkfs fs.img   readme.txt _*
+
+clean::
+	rm -f mkfs fs.img 
+	make -C programs clean
+	rm -f _*
+
+
+
+#############################################################################
+# Generic rules
+#############################################################################
+
+-include Makefile.common
+
+#TODO
 -include *.d
 
-clean: 
-	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
-	*.o *.d *.asm *.sym vectors.S parport.out \
-	bootblock kernel xv6.img fs.img mkfs \
-	$(UPROGS)
+clean::
+	rm -f *.o *.d *.asm *.sym 
+	rm -f *.out
+
+#############################################################################
+# For developers
+#############################################################################
+
+tags: 
+	find -type f | xargs etags.emacs
+
+wc:
+	wc -l *.[cSh] */*.[cSh] */*/*.[cSh]
+# => 7976
+
+#############################################################################
+# Literate programming
+#############################################################################
 
 # make a printout
-FILES = $(shell grep -v '^\#' runoff.list)
-PRINT = runoff.list $(FILES)
+#FILES = $(shell grep -v '^\#' runoff.list)
+#PRINT = runoff.list $(FILES)
 
 xv6.pdf: $(PRINT)
 	./runoff
 
 print: xv6.pdf
 
-# run in emulators
+clean:: 
+	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg
+
+#############################################################################
+# Tests, emulators
+#############################################################################
+
+qemu: fs.img xv6.img
+	qemu -parallel stdio -hdb fs.img xv6.img
 
 bochs : fs.img xv6.img
 	if [ ! -e .bochsrc ]; then ln -s dot-bochsrc .bochsrc; fi
 	bochs -q
 
-qemu: fs.img xv6.img
-	qemu -parallel stdio -hdb fs.img xv6.img
+
+
+qemusmp: fs.img xv6.img
+	qemu -smp 2 -parallel stdio -hdb fs.img xv6.img
 

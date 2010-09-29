@@ -1,0 +1,80 @@
+
+* Compared to the original (xv6-rev2)
+
+ - I moved files around so better structure. It also helped me 
+   understand the architecture.
+ - split kernel vs programs
+ - Use a make depend for programs
+ - Make a ulib.a
+ - added some DEBUG so clearer what is real code from debugging code
+   visually (cprintf looks too much like a regular func)
+
+* TODO
+
+added some debug printf to understand what happens
+make depend for kernel
+split defs.h, and put some #ifdef
+
+who set GDT for kernel vs user segments ???
+
+why can not set -Ttext 4  and in proc.c  cs->eip = 4 ?
+
+It uses segmentation to separate kernel code from user code ...
+simpler, but bad
+
+* TODO big
+
+virtual memory ... 
+malloc/brk system call ... ? apparently there is brk, but there is
+ no userland malloc library (a kind of libc)
+
+each process is allocated a fixed amount of memory ?
+and executed in a special segment ?
+
+
+* flows 
+
+** flow when boot:
+
+*** not kernel
+ - BIOS load boot sector at 0x7c00 (hence ld -Ttext 0x7c00 for bootblock)
+
+ - arch/boot/bootasm.S,  16 bits -> 32 bits + simple stack + simple GDT
+   => enough to setup env so can execute very small C code compiled by gcc
+ - arch/boot/bootmain.c, read kernel on the disk, read elf header
+   and load the different parts in memory from the disk. Then jump to 
+   entry point mentionned in elf header (because ld -Ttext 0x100000, that 
+   means the kernel is at this physical/virtual memory, and because of
+   ld -e main, the entry point is main
+
+*** kernel
+
+ - init/main.c
+    [ possibly copy code at 0x7000 to bootstrap other CPUs when use SMP,
+      and then branch to code so that each CPU sets its GTD and stack too. ]
+
+    - initialize many data structures, mainly locks attached to important
+      structures
+    - pic_init(), to enable interruptions
+    - TODO kinit() setup only 1Mo of memory ...
+    - tvinit(), trap vector init,  coming from vectors.S, which
+      lead to alltraps in trap.asm, which call trap() in trap.c
+    - timer_init(), enable timer IRQ, which when will happen will
+      go in trap(), which will augment the tick and call yield(),
+      which will call sched()
+    - userinit() copy the compiled code of initcode.S 
+
+** flow when timer interrupt:
+  - trap.asm alltraps
+  - trap.c trap()
+  - proc.c yield()
+  - swtich.S swtch assembly
+
+** flow when run program
+ ??? initcode ??
+
+** flow when syscall:
+ ???
+
+* debugging aids:
+ - ^P in console calls Proc.procdump

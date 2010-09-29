@@ -1,0 +1,18 @@
+cat.o: cat.c ../include/types.h ../include/stat.h ../include/user.h
+echo.o: echo.c ../include/types.h ../include/stat.h ../include/user.h
+forktest.o: forktest.c ../include/types.h ../include/stat.h \
+ ../include/user.h
+grep.o: grep.c ../include/types.h ../include/stat.h ../include/user.h
+init.o: init.c ../include/types.h ../include/stat.h ../include/user.h \
+ ../include/fcontrol.h
+kill.o: kill.c ../include/types.h ../include/stat.h ../include/user.h
+ln.o: ln.c ../include/types.h ../include/stat.h ../include/user.h
+ls.o: ls.c ../include/types.h ../include/stat.h ../include/user.h \
+ ../include/fs.h
+mkdir.o: mkdir.c ../include/types.h ../include/stat.h ../include/user.h
+rm.o: rm.c ../include/types.h ../include/stat.h ../include/user.h
+sh.o: sh.c ../include/types.h ../include/user.h ../include/fcontrol.h
+usertests.o: usertests.c ../include/types.h ../include/stat.h \
+ ../include/user.h ../include/fs.h ../include/fcontrol.h
+wc.o: wc.c ../include/types.h ../include/stat.h ../include/user.h
+zombie.o: zombie.c ../include/types.h ../include/stat.h ../include/user.h
