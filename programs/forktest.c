@@ -5,11 +5,13 @@
 #include "stat.h"
 #include "user.h"
 
+/* dupe: ulib/printf.c
 void
 printf(int fd, char *s, ...)
 {
   write(fd, s, strlen(s));
 }
+*/
 
 void
 forktest(void)

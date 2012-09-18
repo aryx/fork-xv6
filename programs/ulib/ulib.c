@@ -22,6 +22,7 @@ strcmp(const char *p, const char *q)
   return (uchar)*p - (uchar)*q;
 }
 
+/* dupe: lib/string.c
 uint
 strlen(char *s)
 {
@@ -31,7 +32,9 @@ strlen(char *s)
     ;
   return n;
 }
+*/
 
+/* dupe: lib/string.c 
 void*
 memset(void *dst, int c, uint n)
 {
@@ -42,6 +45,24 @@ memset(void *dst, int c, uint n)
     *d++ = c;
   return dst;
 }
+*/
+
+/* dupe: lib/string.c
+ * but different implem, weird
+void*
+memmove(void *vdst, void *vsrc, int n)
+{
+  char *dst, *src;
+  
+  dst = vdst;
+  src = vsrc;
+  while(n-- > 0)
+    *dst++ = *src++;
+  return vdst;
+}
+*/
+
+
 
 char*
 strchr(const char *s, char c)
@@ -95,14 +116,3 @@ atoi(const char *s)
   return n;
 }
 
-void*
-memmove(void *vdst, void *vsrc, int n)
-{
-  char *dst, *src;
-  
-  dst = vdst;
-  src = vsrc;
-  while(n-- > 0)
-    *dst++ = *src++;
-  return vdst;
-}

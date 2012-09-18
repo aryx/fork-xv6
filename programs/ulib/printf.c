@@ -8,6 +8,7 @@ putc(int fd, char c)
   write(fd, &c, 1);
 }
 
+// dupe with drivers/console.c, but putc -> cons_putc
 static void
 printint(int fd, int xx, int base, int sgn)
 {
