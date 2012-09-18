@@ -11,6 +11,15 @@
 
 * TODO
 
+** please codegraph
+
+rename duplicate functions like exit() that are used in the kernel
+but which have the same name than syscalls used in user programs
+
+dont use functions names in user programs like ialloc() in mkfs.c
+that corresponds to internal kernel functions
+
+**
 added some debug printf to understand what happens
 make depend for kernel
 split defs.h, and put some #ifdef
