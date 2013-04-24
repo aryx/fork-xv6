@@ -29,9 +29,10 @@ UPROGS=\
 	_mkdir\
 	_rm\
 	_sh\
-	_usertests\
 	_wc\
 	_zombie\
+
+#	_usertests\
 
 LIBS = ulib/ulib.a
 

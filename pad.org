@@ -14,7 +14,10 @@
 ** please codegraph
 
 rename duplicate functions like exit() that are used in the kernel
-but which have the same name than syscalls used in user programs
+but which have the same name than syscalls used in user programs.
+sys_exit.
+
+also kmemset, kmemmove.
 
 dont use functions names in user programs like ialloc() in mkfs.c
 that corresponds to internal kernel functions
