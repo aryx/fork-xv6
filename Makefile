@@ -59,14 +59,14 @@ all: bootblock kernel fs.img xv6.img
 #----------------------------------------------------------------------------
 
 #pad: need -O to generate a smaller than 512 bytes program
+#pad: need also the -j .text otherwise not small enough
 # sign.pl makes bootblock a valid bootsect, with the magic 55AA at the end
 bootblock: arch/boot/bootasm.S arch/boot/bootmain.c
 	$(CC) $(CFLAGS) -O -c arch/boot/bootasm.S
 	$(CC) $(CFLAGS) -O -c arch/boot/bootmain.c
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o bootblock.o bootasm.o bootmain.o
-	$(OBJCOPY) -S -O binary bootblock.o bootblock
+	$(OBJCOPY) -S -O binary -j .text  bootblock.o bootblock
 	scripts/sign.pl bootblock
-
 
 #----------------------------------------------------------------------------
 # special embedded low level progs
@@ -196,9 +196,11 @@ clean::
 #############################################################################
 # Tests, emulators
 #############################################################################
+.PHONY:qemu
 
-qemu: fs.img xv6.img
-	qemu -parallel stdio -hdb fs.img xv6.img
+#fs.img xv6.img
+qemu: 
+	qemu-system-i386 -parallel stdio -hdb fs.img xv6.img
 
 bochs : fs.img xv6.img
 	if [ ! -e .bochsrc ]; then ln -s dot-bochsrc .bochsrc; fi
