@@ -1,24 +1,39 @@
 
+todo: apparently recent version of xv6 have paging?
+
+* Compiling
+
+** on mac need elf cross compiler
+compile/install binutils from git
+compile/install gcc from git
+ but need to build outside source directory (mkdir obj; cd obj; ../gcc/configure...)
+
 * Compared to the original (xv6-rev2)
 
- - I moved files around so better structure. It also helped me 
-   understand the architecture.
+ - I moved files around in subdirectories, for a better structure. 
+   It helps understand the software architecture.
  - split kernel vs programs
  - Use a make depend for programs
  - Make a ulib.a
  - added some DEBUG so clearer what is real code from debugging code
    visually (cprintf looks too much like a regular func)
+ - rename duplicate functions like exit() that are used in the kernel
+   but which have the same name than syscalls used in user programs.
+   sys_exit.
+ - renamed utility functions in kmemset, kmemmove
+
+** todo: would be good to develop a tool inspired by semantic-vcs
+so that when they add features in the original xv6, I can fuzzy
+apply the patch to my own repo and hopefully it will find
+where I've moved the file (can compute an edit distance
+between all the files, find the closest one heuristic
+and then apply patch with some fuzzyness factor)
 
 * TODO
+put .h closer to .c, like in ocaml, I have the .mli close to .ml,
+I don't have any include/
 
-** please codegraph
-
-rename duplicate functions like exit() that are used in the kernel
-but which have the same name than syscalls used in user programs.
-sys_exit.
-
-also kmemset, kmemmove.
-
+** make codegraph happier
 dont use functions names in user programs like ialloc() in mkfs.c
 that corresponds to internal kernel functions
 
@@ -42,7 +57,6 @@ malloc/brk system call ... ? apparently there is brk, but there is
 
 each process is allocated a fixed amount of memory ?
 and executed in a special segment ?
-
 
 * flows 
 
@@ -89,4 +103,5 @@ and executed in a special segment ?
  ???
 
 * debugging aids:
+
  - ^P in console calls Proc.procdump
