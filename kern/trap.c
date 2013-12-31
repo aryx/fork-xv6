@@ -60,11 +60,11 @@ trap(struct trapframe *tf)
 {
   if(tf->trapno == T_SYSCALL){
     if(cp->killed)
-      exit();
+      kexit();
     cp->tf = tf;
     syscall(); // !!!!!
     if(cp->killed)
-      exit();
+      kexit();
     return;
   }
 
@@ -113,7 +113,7 @@ trap(struct trapframe *tf)
   // (If it is still executing in the kernel, let it keep running 
   // until it gets to the regular system call return.)
   if(cp && cp->killed && (tf->cs&3) == DPL_USER)
-    exit();
+    kexit();
 
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.

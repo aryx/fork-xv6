@@ -37,7 +37,7 @@
 // Globals
 //***************************************************************************
 
-struct buf buf[NBUF];
+struct buf kbuf[NBUF];
 struct spinlock buf_table_lock;
 
 // Linked list of all buffers, through prev/next.
@@ -59,7 +59,7 @@ binit(void)
   // Create linked list of buffers
   bufhead.prev = &bufhead;
   bufhead.next = &bufhead;
-  for(b = buf; b < buf+NBUF; b++){
+  for(b = kbuf; b < kbuf+NBUF; b++){
     b->next = bufhead.next;
     b->prev = &bufhead;
     bufhead.next->prev = b;
@@ -87,7 +87,7 @@ bget(uint dev, uint sector)
     if((b->flags & (B_BUSY|B_VALID)) &&
        b->dev == dev && b->sector == sector){
       if(b->flags & B_BUSY){
-        sleep(buf, &buf_table_lock);
+        ksleep(kbuf, &buf_table_lock);
         goto loop;
       }
       b->flags |= B_BUSY;
@@ -148,7 +148,7 @@ brelse(struct buf *b)
   bufhead.next = b;
 
   b->flags &= ~B_BUSY;
-  wakeup(buf);
+  wakeup(kbuf);
 
   release(&buf_table_lock);
 }

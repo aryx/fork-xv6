@@ -74,9 +74,9 @@ cga_putc(int c)
     crt[pos++] = (c&0xff) | 0x0700;  // black on white
   
   if((pos/80) >= 24){  // Scroll up.
-    memmove(crt, crt+80, sizeof(crt[0])*23*80);
+    kmemmove(crt, crt+80, sizeof(crt[0])*23*80);
     pos -= 80;
-    memset(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
+    kmemset(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
   }
   
   outb(CRTPORT, 14);
@@ -263,7 +263,7 @@ console_read(struct inode *ip, char *dst, int n)
         ilock(ip);
         return -1;
       }
-      sleep(&input.r, &input.lock);
+      ksleep(&input.r, &input.lock);
     }
     c = input.buf[input.r++ % INPUT_BUF];
     if(c == C('D')){  // EOF

@@ -58,7 +58,7 @@ mp_search1(uchar *addr, int len)
 
   e = addr+len;
   for(p = addr; p < e; p += sizeof(struct mp))
-    if(memcmp(p, "_MP_", 4) == 0 && sum(p, sizeof(struct mp)) == 0)
+    if(kmemcmp(p, "_MP_", 4) == 0 && sum(p, sizeof(struct mp)) == 0)
       return (struct mp*)p;
   return 0;
 }
@@ -101,7 +101,7 @@ mp_config(struct mp **pmp)
   if((mp = mp_search()) == 0 || mp->physaddr == 0)
     return 0;
   conf = (struct mpconf*)mp->physaddr;
-  if(memcmp(conf, "PCMP", 4) != 0)
+  if(kmemcmp(conf, "PCMP", 4) != 0)
     return 0;
   if(conf->version != 1 && conf->version != 4)
     return 0;

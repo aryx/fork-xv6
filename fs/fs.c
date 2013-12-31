@@ -82,7 +82,7 @@ readsb(int dev, struct superblock *sb)
   struct buf *bp;
   
   bp = bread(dev, 1);
-  memmove(sb, bp->data, sizeof(*sb));
+  kmemmove(sb, bp->data, sizeof(*sb));
   brelse(bp);
 }
 
@@ -93,7 +93,7 @@ bzero(int dev, int bno)
   struct buf *bp;
   
   bp = bread(dev, bno);
-  memset(bp->data, 0, BSIZE);
+  kmemset(bp->data, 0, BSIZE);
   bwrite(bp);
   brelse(bp);
 }
@@ -220,7 +220,7 @@ ilock(struct inode *ip)
 
   acquire(&icache.lock);
   while(ip->flags & I_BUSY)
-    sleep(ip, &icache.lock);
+    ksleep(ip, &icache.lock);
   ip->flags |= I_BUSY;
   release(&icache.lock);
 
@@ -232,7 +232,7 @@ ilock(struct inode *ip)
     ip->minor = dip->minor;
     ip->nlink = dip->nlink;
     ip->size = dip->size;
-    memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
+    kmemmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
     brelse(bp);
     ip->flags |= I_VALID;
     if(ip->type == 0)
@@ -297,7 +297,7 @@ ialloc(uint dev, short type)
     bp = bread(dev, IBLOCK(inum));
     dip = (struct dinode*)bp->data + inum%IPB;
     if(dip->type == 0){  // a free inode
-      memset(dip, 0, sizeof(*dip));
+      kmemset(dip, 0, sizeof(*dip));
       dip->type = type;
       bwrite(bp);   // mark it allocated on the disk
       brelse(bp);
@@ -322,7 +322,7 @@ iupdate(struct inode *ip)
   dip->minor = ip->minor;
   dip->nlink = ip->nlink;
   dip->size = ip->size;
-  memmove(dip->addrs, ip->addrs, sizeof(ip->addrs));
+  kmemmove(dip->addrs, ip->addrs, sizeof(ip->addrs));
   bwrite(bp);
   brelse(bp);
 }
@@ -439,7 +439,7 @@ readi(struct inode *ip, char *dst, uint off, uint n)
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
     bp = bread(ip->dev, bmap(ip, off/BSIZE, 0));
     m = min(n - tot, BSIZE - off%BSIZE);
-    memmove(dst, bp->data + off%BSIZE, m);
+    kmemmove(dst, bp->data + off%BSIZE, m);
     brelse(bp);
   }
   return n;
@@ -466,7 +466,7 @@ writei(struct inode *ip, char *src, uint off, uint n)
   for(tot=0; tot<n; tot+=m, off+=m, src+=m){
     bp = bread(ip->dev, bmap(ip, off/BSIZE, 1));
     m = min(n - tot, BSIZE - off%BSIZE);
-    memmove(bp->data + off%BSIZE, src, m);
+    kmemmove(bp->data + off%BSIZE, src, m);
     bwrite(bp);
     brelse(bp);
   }
@@ -483,7 +483,7 @@ writei(struct inode *ip, char *src, uint off, uint n)
 int
 namecmp(const char *s, const char *t)
 {
-  return strncmp(s, t, DIRSIZ);
+  return kstrncmp(s, t, DIRSIZ);
 }
 
 // Look for a directory entry in a directory.
@@ -542,7 +542,7 @@ dirlink(struct inode *dp, char *name, uint ino)
       break;
   }
 
-  strncpy(de.name, name, DIRSIZ);
+  kstrncpy(de.name, name, DIRSIZ);
   de.inum = ino;
   if(writei(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
     panic("dirlink");
@@ -578,9 +578,9 @@ skipelem(char *path, char *name)
     path++;
   len = path - s;
   if(len >= DIRSIZ)
-    memmove(name, s, DIRSIZ);
+    kmemmove(name, s, DIRSIZ);
   else {
-    memmove(name, s, len);
+    kmemmove(name, s, len);
     name[len] = 0;
   }
   while(*path == '/')

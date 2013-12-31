@@ -20,14 +20,14 @@ sys_fork(void)
 int
 sys_exit(void)
 {
-  exit();
+  kexit();
   return 0;  // not reached
 }
 
 int
 sys_wait(void)
 {
-  return wait();
+  return kwait();
 }
 
 int
@@ -37,7 +37,7 @@ sys_kill(void)
 
   if(argint(0, &pid) < 0)
     return -1;
-  return kill(pid);
+  return kkill(pid);
 }
 
 int
@@ -73,7 +73,7 @@ sys_sleep(void)
       release(&tickslock);
       return -1;
     }
-    sleep(&ticks, &tickslock);
+    ksleep(&ticks, &tickslock);
   }
   release(&tickslock);
   return 0;

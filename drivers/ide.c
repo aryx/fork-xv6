@@ -170,7 +170,7 @@ ide_rw(struct buf *b)
   // Wait for request to finish.
   // Assuming will not sleep too long: ignore cp->killed.
   while((b->flags & (B_VALID|B_DIRTY)) != B_VALID)
-    sleep(b, &ide_lock);
+    ksleep(b, &ide_lock);
 
   release(&ide_lock);
 }

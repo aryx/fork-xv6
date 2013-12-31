@@ -7,7 +7,7 @@
 #include "elf.h"
 
 int
-exec(char *path, char **argv)
+kexec(char *path, char **argv)
 {
   char *mem, *s, *last;
   int i, argc, arglen, len, off;
@@ -42,7 +42,7 @@ exec(char *path, char **argv)
   // Arguments.
   arglen = 0;
   for(argc=0; argv[argc]; argc++)
-    arglen += strlen(argv[argc]) + 1;
+    arglen += kstrlen(argv[argc]) + 1;
   arglen = (arglen+3) & ~3;
   sz += arglen + 4*(argc+1);
 
@@ -54,7 +54,7 @@ exec(char *path, char **argv)
   mem = kalloc(sz);
   if(mem == 0)
     goto bad;
-  memset(mem, 0, sz);
+  kmemset(mem, 0, sz);
 
   // Load program into memory.
   for(i=0, off=elf.phoff; i<elf.phnum; i++, off+=sizeof(ph)){
@@ -66,7 +66,7 @@ exec(char *path, char **argv)
       goto bad;
     if(readi(ip, mem + ph.va, ph.offset, ph.filesz) != ph.filesz)
       goto bad;
-    memset(mem + ph.va + ph.filesz, 0, ph.memsz - ph.filesz);
+    kmemset(mem + ph.va + ph.filesz, 0, ph.memsz - ph.filesz);
   }
   iunlockput(ip);
   
@@ -77,9 +77,9 @@ exec(char *path, char **argv)
   // Copy argv strings and pointers to stack.
   *(uint*)(mem+argp + 4*argc) = 0;  // argv[argc]
   for(i=argc-1; i>=0; i--){
-    len = strlen(argv[i]) + 1;
+    len = kstrlen(argv[i]) + 1;
     sp -= len;
-    memmove(mem+sp, argv[i], len);
+    kmemmove(mem+sp, argv[i], len);
     *(uint*)(mem+argp + 4*i) = sp;  // argv[i]
   }
 
@@ -96,7 +96,7 @@ exec(char *path, char **argv)
   for(last=s=path; *s; s++)
     if(*s == '/')
       last = s+1;
-  safestrcpy(cp->name, last, sizeof(cp->name));
+  ksafestrcpy(cp->name, last, sizeof(cp->name));
 
   // Commit to the new image.
   kfree(cp->mem, cp->sz);

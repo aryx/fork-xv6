@@ -199,7 +199,7 @@ sys_unlink(void)
     return -1;
   }
 
-  memset(&de, 0, sizeof(de));
+  kmemset(&de, 0, sizeof(de));
   if(writei(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
     panic("unlink: writei");
   iunlockput(dp);
@@ -357,7 +357,7 @@ sys_exec(void)
 
   if(argstr(0, &path) < 0 || argint(1, (int*)&uargv) < 0)
     return -1;
-  memset(argv, 0, sizeof(argv));
+  kmemset(argv, 0, sizeof(argv));
   for(i=0;; i++){
     if(i >= NELEM(argv))
       return -1;
@@ -370,7 +370,7 @@ sys_exec(void)
     if(fetchstr(cp, uarg, &argv[i]) < 0)
       return -1;
   }
-  return exec(path, argv);
+  return kexec(path, argv);
 }
 
 int

@@ -87,8 +87,8 @@ growproc(int n)
   newmem = kalloc(cp->sz + n);
   if(newmem == 0)
     return -1;
-  memmove(newmem, cp->mem, cp->sz);
-  memset(newmem + cp->sz, 0, n);
+  kmemmove(newmem, cp->mem, cp->sz);
+  kmemset(newmem + cp->sz, 0, n);
   oldmem = cp->mem;
   cp->mem = newmem;
   kfree(oldmem, cp->sz);
@@ -152,7 +152,7 @@ copyproc(struct proc *p)
 
   if(p){  // Copy process state from p.
     np->parent = p;
-    memmove(np->tf, p->tf, sizeof(*np->tf));
+    kmemmove(np->tf, p->tf, sizeof(*np->tf));
   
     np->sz = p->sz;
     if((np->mem = kalloc(np->sz)) == 0){
@@ -161,7 +161,7 @@ copyproc(struct proc *p)
       np->state = UNUSED;
       return 0;
     }
-    memmove(np->mem, p->mem, np->sz);
+    kmemmove(np->mem, p->mem, np->sz);
 
     for(i = 0; i < NOFILE; i++)
       if(p->ofile[i])
@@ -170,7 +170,7 @@ copyproc(struct proc *p)
   }
 
   // Set up new context to start executing at forkret (see below).
-  memset(&np->context, 0, sizeof(np->context));
+  kmemset(&np->context, 0, sizeof(np->context));
   np->context.eip = (uint)forkret;
   np->context.esp = (uint)np->tf;
 
@@ -196,7 +196,7 @@ userinit(void)
   p->sz = PAGE;
   p->mem = kalloc(p->sz);
   p->cwd = namei("/");
-  memset(p->tf, 0, sizeof(*p->tf));
+  kmemset(p->tf, 0, sizeof(*p->tf));
   p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
   p->tf->ds = (SEG_UDATA << 3) | DPL_USER;
   p->tf->es = p->tf->ds;
@@ -211,8 +211,8 @@ userinit(void)
   // On entry to user space, start executing at beginning of initcode.S.
   // pad: cf ld -Ttext 0  for initcode
   p->tf->eip = 0;
-  memmove(p->mem, _binary_initcode_start, (int)_binary_initcode_size);
-  safestrcpy(p->name, "initcode", sizeof(p->name));
+  kmemmove(p->mem, _binary_initcode_start, (int)_binary_initcode_size);
+  ksafestrcpy(p->name, "initcode", sizeof(p->name));
   p->state = RUNNABLE;
   
   initproc = p;
@@ -322,7 +322,7 @@ forkret(void)
 // Atomically release lock and sleep on chan.
 // Reacquires lock when reawakened.
 void
-sleep(void *chan, struct spinlock *lk)
+ksleep(void *chan, struct spinlock *lk)
 {
   if(cp == 0)
     panic("sleep");
@@ -382,7 +382,7 @@ wakeup(void *chan)
 // Process won't actually exit until it returns
 // to user space (see trap in trap.c).
 int
-kill(int pid)
+kkill(int pid)
 {
   struct proc *p;
 
@@ -405,7 +405,7 @@ kill(int pid)
 // Exited processes remain in the zombie state
 // until their parent calls wait() to find out they exited.
 void
-exit(void)
+kexit(void)
 {
   struct proc *p;
   int fd;
@@ -448,7 +448,7 @@ exit(void)
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
 int
-wait(void)
+kwait(void)
 {
   struct proc *p;
   int i, havekids, pid;
@@ -485,7 +485,7 @@ wait(void)
     }
 
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
-    sleep(cp, &proc_table_lock);
+    ksleep(cp, &proc_table_lock);
   }
 }
 
@@ -500,12 +500,12 @@ void
 procdump(void)
 {
   static char *states[] = {
-  [UNUSED]    "unused",
-  [EMBRYO]    "embryo",
-  [SLEEPING]  "sleep ",
-  [RUNNABLE]  "runble",
-  [RUNNING]   "run   ",
-  [ZOMBIE]    "zombie"
+  [UNUSED]    = "unused",
+  [EMBRYO]    = "embryo",
+  [SLEEPING]  = "sleep ",
+  [RUNNABLE]  = "runble",
+  [RUNNING]   = "run   ",
+  [ZOMBIE]    = "zombie"
   };
   int i, j;
   struct proc *p;
@@ -516,7 +516,7 @@ procdump(void)
     p = &proc[i];
     if(p->state == UNUSED)
       continue;
-    if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
+    if(/*p->state >= 0 && */p->state < NELEM(states) && states[p->state])
       state = states[p->state];
     else
       state = "???";

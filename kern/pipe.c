@@ -87,7 +87,7 @@ pipewrite(struct pipe *p, char *addr, int n)
         return -1;
       }
       wakeup(&p->readp);
-      sleep(&p->writep, &p->lock);
+      ksleep(&p->writep, &p->lock);
     }
     p->data[p->writep] = addr[i];
     p->writep = (p->writep + 1) % PIPESIZE;
@@ -108,7 +108,7 @@ piperead(struct pipe *p, char *addr, int n)
       release(&p->lock);
       return -1;
     }
-    sleep(&p->readp, &p->lock);
+    ksleep(&p->readp, &p->lock);
   }
   for(i = 0; i < n; i++){
     if(p->readp == p->writep)

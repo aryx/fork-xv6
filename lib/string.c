@@ -1,7 +1,7 @@
 #include "types.h"
 
 void*
-memset(void *dst, int c, uint n)
+kmemset(void *dst, int c, uint n)
 {
   char *d;
 
@@ -13,7 +13,7 @@ memset(void *dst, int c, uint n)
 }
 
 int
-memcmp(const void *v1, const void *v2, uint n)
+kmemcmp(const void *v1, const void *v2, uint n)
 {
   const uchar *s1, *s2;
   
@@ -29,7 +29,7 @@ memcmp(const void *v1, const void *v2, uint n)
 }
 
 void*
-memmove(void *dst, const void *src, uint n)
+kmemmove(void *dst, const void *src, uint n)
 {
   const char *s;
   char *d;
@@ -49,7 +49,7 @@ memmove(void *dst, const void *src, uint n)
 }
 
 int
-strncmp(const char *p, const char *q, uint n)
+kstrncmp(const char *p, const char *q, uint n)
 {
   while(n > 0 && *p && *p == *q)
     n--, p++, q++;
@@ -59,7 +59,7 @@ strncmp(const char *p, const char *q, uint n)
 }
 
 char*
-strncpy(char *s, const char *t, int n)
+kstrncpy(char *s, const char *t, int n)
 {
   char *os;
   
@@ -73,7 +73,7 @@ strncpy(char *s, const char *t, int n)
 
 // Like strncpy but guaranteed to NUL-terminate.
 char*
-safestrcpy(char *s, const char *t, int n)
+ksafestrcpy(char *s, const char *t, int n)
 {
   char *os;
   
@@ -87,7 +87,7 @@ safestrcpy(char *s, const char *t, int n)
 }
 
 int
-strlen(const char *s)
+kstrlen(const char *s)
 {
   int n;
 

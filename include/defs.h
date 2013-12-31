@@ -20,7 +20,7 @@ void            console_intr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
 
 // exec.c
-int             exec(char*, char**);
+int             kexec(char*, char**);
 
 // file.c
 struct file*    filealloc(void);
@@ -93,16 +93,16 @@ int             pipewrite(struct pipe*, char*, int);
 // proc.c
 struct proc*    copyproc(struct proc*);
 struct proc*    curproc(void);
-void            exit(void);
+void            kexit(void);
 int             growproc(int);
-int             kill(int);
+int             kkill(int);
 void            pinit(void);
 void            procdump(void);
 void            scheduler(void) __attribute__((noreturn));
 void            setupsegs(struct proc*);
-void            sleep(void*, struct spinlock*);
+void            ksleep(void*, struct spinlock*);
 void            userinit(void);
-int             wait(void);
+int             kwait(void);
 void            wakeup(void*);
 void            yield(void);
 
@@ -119,13 +119,13 @@ void            pushcli();
 void            popcli();
 
 // string.c
-int             memcmp(const void*, const void*, uint);
-void*           memmove(void*, const void*, uint);
-void*           memset(void*, int, uint);
-char*           safestrcpy(char*, const char*, int);
-int             strlen(const char*);
-int             strncmp(const char*, const char*, uint);
-char*           strncpy(char*, const char*, int);
+int             kmemcmp(const void*, const void*, uint);
+void*           kmemmove(void*, const void*, uint);
+void*           kmemset(void*, int, uint);
+char*           ksafestrcpy(char*, const char*, int);
+int             kstrlen(const char*);
+int             kstrncmp(const char*, const char*, uint);
+char*           kstrncpy(char*, const char*, int);
 
 // syscall.c
 int             argint(int, int*);

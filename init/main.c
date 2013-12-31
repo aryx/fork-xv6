@@ -56,7 +56,7 @@ bootothers(void)
 
   // Write bootstrap code to unused memory at 0x7000.
   code = (uchar*)0x7000;
-  memmove(code, _binary_bootother_start, (uint)_binary_bootother_size);
+  kmemmove(code, _binary_bootother_start, (uint)_binary_bootother_size);
 
   for(c = cpus; c < cpus+ncpu; c++){
     if(c == cpus+cpu())  // We've started already.
@@ -89,7 +89,7 @@ main(void)
   //DEBUG("ncpu = %d", ncpu);
 
   // clear BSS  pad: seems very important
-  memset(edata, 0, end - edata);
+  kmemset(edata, 0, end - edata);
 
   // Welcome
   cprintf("Welcome to XIX\n");
