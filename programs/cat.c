@@ -2,7 +2,7 @@
 #include "stat.h"
 #include "user.h"
 
-char buf[512];
+static char buf[512];
 
 void
 cat(int fd)
