@@ -75,7 +75,7 @@ kfree(char *v, int len)
     panic("kfree");
 
   // Fill with junk to catch dangling refs.
-  memset(v, 1, len);
+  kmemset(v, 1, len);
 
   acquire(&kalloc_lock);
   p = (struct run*)v;
