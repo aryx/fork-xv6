@@ -172,10 +172,27 @@ clean::
 
 tags: 
 	find -type f | xargs etags.emacs
+graph:
+	~/pfff/codegraph -derived_data -lang c -build .
+prolog:
+	~/pfff/codequery -lang c -build .
+datalog:
+	~/pfff/codequery -datalog -lang c -build .
+loc:
+	~/pfff/codemap -filter cpp -test_loc .
+
+check:
+	~/pfff/scheck -filter 3 -lang c .
+visual:
+	~/pfff/codemap -filter cpp -no_legend -ss 2 .
 
 wc:
 	wc -l *.[cSh] */*.[cSh] */*/*.[cSh]
 # => 7976
+
+clean::
+	find -name "*.clang*" -exec rm -f {} \;
+
 
 #############################################################################
 # Literate programming
